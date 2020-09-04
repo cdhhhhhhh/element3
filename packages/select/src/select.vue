@@ -95,15 +95,15 @@
       :tabindex="multiple && filterable ? '-1' : null"
       @focus="handleFocus"
       @blur="handleBlur"
-      @keyup.native="debouncedOnInputChange"
-      @keydown.native.down.stop.prevent="navigateOptions('next')"
-      @keydown.native.up.stop.prevent="navigateOptions('prev')"
-      @keydown.native.enter.prevent="selectOption"
-      @keydown.native.esc.stop.prevent="visible = false"
-      @keydown.native.tab="visible = false"
-      @paste.native="debouncedOnInputChange"
-      @mouseenter.native="inputHovering = true"
-      @mouseleave.native="inputHovering = false"
+      @keyup="debouncedOnInputChange"
+      @keydown.down.stop.prevent="navigateOptions('next')"
+      @keydown.up.stop.prevent="navigateOptions('prev')"
+      @keydown.enter.prevent="selectOption"
+      @keydown.esc.stop.prevent="visible = false"
+      @keydown.tab="visible = false"
+      @paste="debouncedOnInputChange"
+      @mouseenter="inputHovering = true"
+      @mouseleave="inputHovering = false"
     >
       <template slot="prefix" v-if="$slots.prefix">
         <slot name="prefix"></slot>
@@ -191,7 +191,10 @@ import { isKorean } from 'element-ui/src/utils/shared'
 
 export default {
   mixins: [Emitter, Locale, Focus('reference'), NavigationMixin],
+  emits:[],
+  setup(props,{emit}){
 
+  },
   name: 'ElSelect',
 
   componentName: 'ElSelect',
