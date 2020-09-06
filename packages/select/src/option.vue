@@ -56,11 +56,11 @@
         hover: false
       })
 
-      const select = inject('select').proxy
+      const select = inject('select').ctx
 
       function queryChange(query) {
         state.visible =
-          new RegExp(escapeRegexpString(query), 'i').test(this.currentLabel) ||
+          new RegExp(escapeRegexpString(query), 'i').test(currentLabel.value) ||
           created.value
         if (!state.visible) {
           select.filteredOptionsCount--
@@ -79,7 +79,7 @@
 
       function selectOptionClick() {
         if (disabled.value !== true && state.groupDisabled !== true) {
-          this.dispatch('ElSelect', 'handleOptionClick', [getCurrentInstance(), true])
+          dispatch('ElSelect', 'handleOptionClick', [getCurrentInstance(), true])
         }
       }
 
@@ -106,7 +106,7 @@
         if (!isObject) {
           return arr && arr.indexOf(target) > -1
         } else {
-          const valueKey = this.select.valueKey
+          const valueKey = select.valueKey
           return (
             arr &&
             arr.some((item) => {

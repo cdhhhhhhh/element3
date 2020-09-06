@@ -198,7 +198,8 @@ import {
   watchEffect,
   nextTick,
   onMounted,
-  onDeactivated
+  onDeactivated,
+  toRef
 } from 'vue'
 
 export default {
@@ -206,6 +207,7 @@ export default {
   emits: ['visible-change', 'update:modelValue', 'change', 'clear','remove-tag','focus'],
   setup(props, { emit }) {
     const { ctx, refs } = getCurrentInstance()
+
     provide('select', getCurrentInstance())
 
     const { broadcast, dispatch, on } = useEmitter()
@@ -239,12 +241,13 @@ export default {
       filterMethod
     } = toRefs(props)
 
+
     const state = reactive({
       options: [],
       cachedOptions: [],
       createdLabel: null,
       createdSelected: false,
-      selected: multiple ? [] : {},
+      selected: multiple.value ? [] : {},
       inputLength: 20,
       inputWidth: 0,
       initialInputHeight: 0,
@@ -619,7 +622,7 @@ export default {
       }
     })
 
-    watch(state.visible, (val) => {
+    watch(()=>state.visible, (val) => {
       if (!val) {
         broadcast('ElSelectDropdown', 'destroyPopper')
         if (refs.input) {
@@ -682,7 +685,7 @@ export default {
       emit('visible-change', val)
     })
 
-    watch(state.options, () => {
+    watch(()=>state.options, () => {
       //check ssr
       if (window === undefined) return
       nextTick(() => {
@@ -720,7 +723,6 @@ export default {
       if (!multiple.value && Array.isArray(modelValue.value)) {
         emit('update:modelValue', '')
       }
-
       on('handleOptionClick', handleOptionSelect)
       on('setSelected', setSelected)
     }
@@ -730,6 +732,7 @@ export default {
     })
 
     function resetInputWidth() {
+      if (!refs.reference) return
       state.inputWidth = refs.reference.$el.getBoundingClientRect().width
     }
 
@@ -742,6 +745,7 @@ export default {
       handleQueryChange(e.target.value)
     })
     onCreate()
+
     onMounted(() => {
       if (
         multiple.value &&
@@ -785,7 +789,7 @@ export default {
           state.visible = !state.visible
         }
         if (state.visible) {
-          ;(refs.input || refs.reference).focus()
+          (refs.input || refs.reference).focus()
         }
       }
     }
@@ -794,7 +798,7 @@ export default {
       if (index > -1 && !selectDisabled.value) {
         const value = modelValue.value.slice()
         value.splice(index, 1)
-        emit('input', value)
+        emit('update:modelValue', value)
         emitChange(value)
         emit('remove-tag', tag.value)
       }
@@ -813,7 +817,7 @@ export default {
     function deleteSelected(event) {
       event.stopPropagation()
       const value = multiple.value ? [] : ''
-      emit('input', value)
+      emit('update:modelValue', value)
       emitChange(value)
       state.visible = false
       emit('clear')
@@ -942,9 +946,11 @@ export default {
       resetInputHeight()
     }
 
+
     return {
       ...toRefs(state),
       selectSize,
+      multiple,
       collapseTagSize,
       selectDisabled,
       readonly,
@@ -953,6 +959,7 @@ export default {
       debounce,
       emptyText,
       showNewOption,
+      popperAppendToBody,
       //method
       debouncedOnInputChange,
       debouncedQueryChange,

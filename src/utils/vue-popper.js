@@ -31,7 +31,7 @@ export default {
     offset: {
       default: 0
     },
-    value: Boolean,
+    modelValue: Boolean,
     visibleArrow: Boolean,
     arrowOffset: {
       type: Number,
@@ -57,20 +57,20 @@ export default {
       currentPlacement: ''
     }
   },
-
+  emits:['update:modelValue'],
   watch: {
-    value: {
+    modelValue: {
       immediate: true,
       handler(val) {
         this.showPopper = val
-        this.$emit('input', val)
+        this.$emit('update:modelValue', val)
       }
     },
 
     showPopper(val) {
       if (this.disabled) return
       val ? this.updatePopper() : this.destroyPopper()
-      this.$emit('input', val)
+      this.$emit('update:modelValue', val)
     }
   },
 

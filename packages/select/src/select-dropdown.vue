@@ -10,14 +10,55 @@
 
 <script type="text/babel">
 import Popper from 'element-ui/src/utils/vue-popper'
-
+import { useEmitter } from 'element-ui/src/use/emitter'
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  getCurrentInstance,
+  inject
+} from 'vue'
 export default {
   name: 'ElSelectDropdown',
 
   componentName: 'ElSelectDropdown',
 
   mixins: [Popper],
+  setup() {
+    const { on } = useEmitter()
 
+    const select = inject('select')
+    const minWidth = ref('')
+    let popperElm, referenceElm
+
+    const { refs, ctx } = getCurrentInstance()
+
+    const popperClass = computed(() => {
+      return select.refs.popperClass
+    })
+
+    watch(
+      () => select.refs.inputWidth,
+      () => {
+        minWidth.value = select.$el.getBoundingClientRect().width + 'px'
+      }
+    )
+    onMounted(() => {
+      referenceElm = select.refs.reference.$el
+      popperElm = select.refs.popperElm = select.$el
+      on('updatePopper', () => {
+        if (select.visible) ctx.updatePopper()
+      })
+      on('destroyPopper', ctx.destroyPopper)
+    })
+    return {
+      minWidth,
+      popperElm,
+      referenceElm,
+      popperClass
+    }
+  },
   props: {
     placement: {
       default: 'bottom-start'
@@ -43,33 +84,6 @@ export default {
       type: Boolean,
       default: true
     }
-  },
-
-  data() {
-    return {
-      minWidth: ''
-    }
-  },
-
-  computed: {
-    popperClass() {
-      return this.$parent.popperClass
-    }
-  },
-
-  watch: {
-    '$parent.inputWidth'() {
-      this.minWidth = this.$parent.$el.getBoundingClientRect().width + 'px'
-    }
-  },
-
-  mounted() {
-    this.referenceElm = this.$parent.$refs.reference.$el
-    this.$parent.popperElm = this.popperElm = this.$el
-    this.$on('updatePopper', () => {
-      if (this.$parent.visible) this.updatePopper()
-    })
-    this.$on('destroyPopper', this.destroyPopper)
   }
 }
 </script>

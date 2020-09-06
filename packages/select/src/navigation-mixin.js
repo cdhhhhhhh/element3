@@ -1,3 +1,4 @@
+import {nextTick} from 'vue'
 export default {
   data() {
     return {
@@ -51,7 +52,7 @@ export default {
         ) {
           this.navigateOptions(direction)
         }
-        this.$nextTick(() => this.scrollToOption(this.hoverOption))
+        nextTick(() => this.scrollToOption(this.hoverOption))
       }
     }
   }
