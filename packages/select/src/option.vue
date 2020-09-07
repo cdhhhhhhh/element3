@@ -33,11 +33,12 @@ export default {
   name: 'ElOption',
 
   componentName: 'ElOption',
-
+  emits:['queryChange','handleGroupDisabled'],
   setup(props) {
 
     const { on, dispatch } = useEmitter()
     const { value, label, created, disabled } = toRefs(props)
+    const {ctx} = getCurrentInstance();
     const state = reactive({
       index: -1,
       groupDisabled: false,
@@ -61,18 +62,19 @@ export default {
 
     function hoverItem() {
       if (!disabled.value && !state.groupDisabled) {
-        select.hoverIndex = select.options.indexOf(getCurrentInstance())
+        select.hoverIndex = select.options.indexOf(ctx)
       }
     }
 
     function selectOptionClick() {
+
       if (disabled.value !== true && state.groupDisabled !== true) {
-        dispatch('ElSelect', 'handleOptionClick', [getCurrentInstance(), true])
+        select.handleOptionClick(ctx, true)
       }
     }
     function onCreated() {
-      select.options.push(getCurrentInstance())
-      select.cachedOptions.push(getCurrentInstance())
+      select.options.push(ctx)
+      select.cachedOptions.push(ctx)
       select.optionsCount++
       select.filteredOptionsCount++
 
@@ -81,7 +83,7 @@ export default {
     }
 
     function isEqual(a, b) {
-      if (!isObject) {
+      if (!isObject.value) {
         return a === b
       } else {
         const valueKey = select.valueKey
@@ -90,7 +92,7 @@ export default {
     }
 
     function contains(arr = [], target) {
-      if (!isObject) {
+      if (!isObject.value) {
         return arr && arr.indexOf(target) > -1
       } else {
         const valueKey = select.valueKey
@@ -115,16 +117,14 @@ export default {
     const currentLabel = computed(() => {
       return label?.value || (isObject.value ? '' : value.value)
     })
-    // const currentValue = computed(() => {
-    //   return value.value || label.value || ''
-    //
-    // })
+
 
     const itemSelected = computed(() => {
       if (!select.multiple) {
-        return isEqual(value.value, select.value)
+        return isEqual(value.value, select.modelValue)
       } else {
-        return contains(select.value, value.value)
+
+        return contains(select.modelValue, value.value)
       }
     })
 
@@ -132,7 +132,7 @@ export default {
       if (select.multiple) {
         return (
           !itemSelected.value &&
-          (select.value || []).length >= select.multipleLimit &&
+          (select.modelValue || []).length >= select.multipleLimit &&
           select.multipleLimit > 0
         )
       } else {
@@ -144,15 +144,14 @@ export default {
     onDeactivated(() => {
       const { selected, multiple } = select
       const selectedOptions = multiple ? selected : [selected]
-      // TODO
-      const index = select.cachedOptions.indexOf(getCurrentInstance())
-      const selectedIndex = selectedOptions.indexOf(getCurrentInstance())
+      const index = select.cachedOptions.indexOf(ctx)
+      const selectedIndex = selectedOptions.indexOf(ctx)
 
       // if option is not selected, remove it from cache
       if (index > -1 && selectedIndex < 0) {
         select.cachedOptions.splice(index, 1)
       }
-      select.onOptionDestroy(select.options.indexOf(getCurrentInstance()))
+      select.onOptionDestroy(select.options.indexOf(ctx))
     })
 
     watch(value, (val, oldVal) => {

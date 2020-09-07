@@ -17,16 +17,8 @@ on(document, 'mouseup', (e) => {
 function createDocumentHandler(el, binding, vnode) {
   return function (mouseup = {}, mousedown = {}) {
     if (
-      !vnode ||
-      !vnode.context ||
-      !mouseup.target ||
-      !mousedown.target ||
-      el.contains(mouseup.target) ||
-      el.contains(mousedown.target) ||
-      el === mouseup.target ||
-      (vnode.context.popperElm &&
-        (vnode.context.popperElm.contains(mouseup.target) ||
-          vnode.context.popperElm.contains(mousedown.target)))
+      !binding || !binding.instance || !mouseup.target || !mousedown.target || el.contains(mouseup.target) || el.contains(mousedown.target) || el
+      === mouseup.target || (binding.instance.popperElm && (binding.instance.popperElm.contains(mouseup.target) || binding.instance.popperElm.contains(mousedown.target)))
     )
       return
 
@@ -51,7 +43,7 @@ function createDocumentHandler(el, binding, vnode) {
  * ```
  */
 export default {
-  bind(el, binding, vnode) {
+  mounted(el, binding, vnode) {
     nodeList.push(el)
     const id = seed++
     el[ctx] = {
@@ -62,7 +54,7 @@ export default {
     }
   },
 
-  update(el, binding, vnode) {
+  updated(el, binding, vnode) {
     el[ctx].documentHandler = createDocumentHandler(el, binding, vnode)
     el[ctx].methodName = binding.expression
     el[ctx].bindingFn = binding.value

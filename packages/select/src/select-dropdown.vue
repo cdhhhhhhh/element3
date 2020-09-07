@@ -16,7 +16,7 @@ export default {
   name: 'ElSelectDropdown',
 
   componentName: 'ElSelectDropdown',
-
+  emits:['destroyPopper','updatePopper'],
   mixins: [Popper],
   setup() {
     const { on } = useEmitter()

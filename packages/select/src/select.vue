@@ -102,13 +102,15 @@
       @keydown.esc.stop.prevent="visible = false"
       @keydown.tab="visible = false"
       @paste="debouncedOnInputChange"
-      @mouseenter="inputHovering = true"
+      @mouseenter.prevent="inputHovering = true"
       @mouseleave="inputHovering = false"
     >
-      <template v-slot:prefix v-if="$slots.prefix">
+      <template
+              v-slot:prefix v-if="$slots.prefix">
         <slot name="prefix"></slot>
       </template>
-      <template v-slot:suffix>
+      <template
+              v-slot:suffix>
         <i
           v-show="!showClose"
           :class="[
@@ -208,7 +210,10 @@ export default {
     'change',
     'clear',
     'remove-tag',
-    'focus'
+    'focus',
+    'blur',
+    'handleOptionClick',
+    'setSelected'
   ],
   setup(props, { emit }) {
     const { ctx } = getCurrentInstance()
@@ -467,7 +472,7 @@ export default {
           if (state.selected.length > 0) {
             state.hoverIndex = Math.min.apply(
               null,
-              state.selected.map((item) => this.options.indexOf(item))
+              state.selected.map((item) => state.options.indexOf(item))
             )
           } else {
             state.hoverIndex = -1
@@ -997,7 +1002,8 @@ export default {
       managePlaceholder,
       resetInputState,
       resetInputHeight,
-      popperClass
+      popperClass,
+      handleOptionClick:handleOptionSelect
     }
   },
   name: 'ElSelect',
@@ -1012,7 +1018,7 @@ export default {
     ElScrollbar
   },
 
-  directives: { Clickoutside },
+  directives: { Clickoutside:Clickoutside },
 
   props: {
     name: String,

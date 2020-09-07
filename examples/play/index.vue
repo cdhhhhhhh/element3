@@ -1,5 +1,19 @@
 <template>
-  <el-select v-model="value" placeholder="请选择">
+  <el-select v-model="value1" multiple placeholder="请选择">
+    <el-option
+            v-for="item in options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value">
+    </el-option>
+  </el-select>
+
+  <el-select
+          v-model="value2"
+          multiple
+          collapse-tags
+          style="margin-left: 20px;"
+          placeholder="请选择">
     <el-option
             v-for="item in options"
             :key="item.value"
@@ -10,7 +24,6 @@
 </template>
 
 <script>
-  import {getCurrentInstance} from 'vue'
   export default {
     data() {
       return {
@@ -20,8 +33,7 @@
         }, {
           value: '选项2',
           label: '双皮奶'
-        },
-          {
+        }, {
           value: '选项3',
           label: '蚵仔煎'
         }, {
@@ -30,9 +42,9 @@
         }, {
           value: '选项5',
           label: '北京烤鸭'
-        }
-        ],
-        value: ''
+        }],
+        value1: [],
+        value2: []
       }
     }
   }
