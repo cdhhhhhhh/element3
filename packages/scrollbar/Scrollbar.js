@@ -1,5 +1,13 @@
 // reference https://github.com/noeldelgado/gemini-scrollbar/blob/master/index.js
-import { nextTick, reactive, ref, toRefs, onMounted, onUnmounted } from 'vue'
+import {
+  getCurrentInstance,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  toRefs
+} from 'vue'
 import {
   addResizeListener,
   removeResizeListener
@@ -101,8 +109,12 @@ export default {
         style = gutterStyle
       }
     }
-
     const { data, handleScroll } = useScroll(wrap, native, resize, noresize)
+
+    // 暴露方法给上下文
+    const { ctx } = getCurrentInstance()
+    ctx.data = data
+    ctx.handleScroll = handleScroll
     return () => (
       <div class="el-scrollbar">
         <div

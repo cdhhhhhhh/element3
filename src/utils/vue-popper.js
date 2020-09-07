@@ -1,5 +1,4 @@
 import { PopupManager } from 'element-ui/src/utils/popup'
-
 const PopperJS = require('./popper')
 // const PopperJS = Vue.prototype.$isServer ? function() {} : require('./popper')
 const stop = (e) => e.stopPropagation()
@@ -57,7 +56,7 @@ export default {
       currentPlacement: ''
     }
   },
-  emits:['update:modelValue'],
+  emits: ['update:modelValue'],
   watch: {
     modelValue: {
       immediate: true,

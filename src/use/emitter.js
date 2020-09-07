@@ -108,13 +108,11 @@ function dispatch() {
 
 function broadcast() {
   const instance = getCurrentInstance()
-
   return (componentName, eventName, ...params) => {
     const _broadcast = (componentInstance) => {
       if (!componentInstance) return
-
       const children = componentInstance.subTree.children
-      if (children) {
+      if (Array.isArray(children)) {
         children.forEach((vnode) => {
           const childComponent = vnode.component
 

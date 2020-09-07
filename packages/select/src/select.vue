@@ -105,10 +105,10 @@
       @mouseenter="inputHovering = true"
       @mouseleave="inputHovering = false"
     >
-      <template slot="prefix" v-if="$slots.prefix">
+      <template v-slot:prefix v-if="$slots.prefix">
         <slot name="prefix"></slot>
       </template>
-      <template slot="suffix">
+      <template v-slot:suffix>
         <i
           v-show="!showClose"
           :class="[
@@ -195,19 +195,23 @@ import {
   reactive,
   toRefs,
   watch,
-  watchEffect,
   nextTick,
   onMounted,
-  onDeactivated,
-  toRef
+  onDeactivated
 } from 'vue'
 
 export default {
   mixins: [NavigationMixin],
-  emits: ['visible-change', 'update:modelValue', 'change', 'clear','remove-tag','focus'],
+  emits: [
+    'visible-change',
+    'update:modelValue',
+    'change',
+    'clear',
+    'remove-tag',
+    'focus'
+  ],
   setup(props, { emit }) {
-    const { ctx, refs } = getCurrentInstance()
-
+    const { ctx } = getCurrentInstance()
     provide('select', getCurrentInstance())
 
     const { broadcast, dispatch, on } = useEmitter()
@@ -240,7 +244,6 @@ export default {
       remoteMethod,
       filterMethod
     } = toRefs(props)
-
 
     const state = reactive({
       options: [],
@@ -296,6 +299,7 @@ export default {
         : modelValue.value !== undefined &&
           modelValue.value !== null &&
           modelValue.value !== ''
+
       return (
         clearable.value &&
         !selectDisabled.value &&
@@ -337,7 +341,7 @@ export default {
       return null
     })
 
-    const showNewOption = () => {
+    const showNewOption = computed(() => {
       const hasExistingOption = state.options
         .filter((option) => !option.created)
         .some((option) => option.currentLabel === state.query)
@@ -347,8 +351,7 @@ export default {
         state.query !== '' &&
         !hasExistingOption
       )
-    }
-
+    })
     function checkDefaultFirstOption() {
       state.hoverIndex = -1
       // highlight the created option
@@ -396,7 +399,7 @@ export default {
       state.hoverIndex = -1
       if (multiple.value && filterable.value) {
         nextTick(() => {
-          const length = refs.input.value.length * 15 + 20
+          const length = ctx.$refs.input.value.length * 15 + 20
           state.inputLength = collapseTags.value ? Math.min(50, length) : length
           managePlaceholder()
           resetInputHeight()
@@ -476,13 +479,13 @@ export default {
     function resetInputHeight() {
       if (collapseTags.value && !filterable.value) return
       nextTick(() => {
-        if (!refs.reference) return
-        const inputChildNodes = refs.reference.$el.childNodes
+        if (!ctx.$refs.reference) return
+        const inputChildNodes = ctx.$refs.reference.$el.childNodes
         const input = [].filter.call(
           inputChildNodes,
           (item) => item.tagName === 'INPUT'
         )[0]
-        const tags = refs.tags
+        const tags = ctx.$refs.tags
         const sizeInMap = state.initialInputHeight || 40
         input.style.height =
           state.selected.length === 0
@@ -507,7 +510,8 @@ export default {
 
     function setSoftFocus() {
       state.softFocus = true
-      const input = refs.input || refs.reference
+      const input = ctx.$refs.input || ctx.$refs.reference
+
       if (input) {
         input.focus()
       }
@@ -520,11 +524,11 @@ export default {
       if (!isObject) {
         return arr.indexOf(value)
       } else {
-        const valueKey = valueKey.value
         let index = -1
         arr.some((item, i) => {
           if (
-            getValueByPath(item, valueKey) === getValueByPath(value, valueKey)
+            getValueByPath(item, valueKey.value) ===
+            getValueByPath(value, valueKey.value)
           ) {
             index = i
             return true
@@ -542,11 +546,13 @@ export default {
     function scrollToOption(option) {
       const target =
         Array.isArray(option) && option[0] ? option[0].$el : option.$el
-      if (refs.popper && target) {
-        const menu = refs.popper.$el.querySelector('.el-select-dropdown__wrap')
+      if (ctx.$refs.popper && target) {
+        const menu = ctx.$refs.popper.$el.querySelector(
+          '.el-select-dropdown__wrap'
+        )
         scrollIntoView(menu, target)
       }
-      refs.scrollbar && refs.scrollbar.handleScroll()
+      ctx.$refs.scrollbar && ctx.$refs.scrollbar.handleScroll()
     }
 
     function handleOptionSelect(option, byClick) {
@@ -568,7 +574,7 @@ export default {
           handleQueryChange('')
           state.inputLength = 20
         }
-        if (filterable.value) refs.input.focus()
+        if (filterable.value) ctx.$refs.input.focus()
       } else {
         emit('update:modelValue', option.value)
         emitChange(option.value)
@@ -600,10 +606,13 @@ export default {
       state.cachedPlaceHolder = state.currentPlaceholder = val
     })
 
-    watch(modelValue, (val) => {
+    watch(modelValue, (val, oldVal) => {
       if (multiple.value) {
         resetInputHeight()
-        if ((val && val.length > 0) || (refs.input && state.query !== '')) {
+        if (
+          (val && val.length > 0) ||
+          (ctx.$refs.input && state.query !== '')
+        ) {
           state.currentPlaceholder = ''
         } else {
           state.currentPlaceholder = state.cachedPlaceHolder
@@ -622,91 +631,97 @@ export default {
       }
     })
 
-    watch(()=>state.visible, (val) => {
-      if (!val) {
-        broadcast('ElSelectDropdown', 'destroyPopper')
-        if (refs.input) {
-          refs.input.blur()
-        }
-        state.query = ''
-        state.previousQuery = null
-        state.selectedLabel = ''
-        state.inputLength = 20
-        state.menuVisibleOnFocus = false
-        resetHoverIndex()
-        nextTick(() => {
-          if (
-            refs.input &&
-            refs.input.value === '' &&
-            state.selected.length === 0
-          ) {
-            state.currentPlaceholder = state.cachedPlaceHolder
+    watch(
+      () => state.visible,
+      (val) => {
+        if (!val) {
+          broadcast('ElSelectDropdown', 'destroyPopper')
+          if (ctx.$refs.input) {
+            ctx.$refs.input.blur()
           }
-        })
-        if (!multiple.value) {
-          if (state.selected) {
+          state.query = ''
+          state.previousQuery = null
+          state.selectedLabel = ''
+          state.inputLength = 20
+          state.menuVisibleOnFocus = false
+          resetHoverIndex()
+          nextTick(() => {
             if (
-              filterable.value &&
-              allowCreate.value &&
-              state.createdSelected &&
-              state.createdLabel
+              ctx.$refs.input &&
+              ctx.$refs.input.value === '' &&
+              state.selected.length === 0
             ) {
-              state.selectedLabel = state.createdLabel
-            } else {
-              state.selectedLabel = state.selected.currentLabel
+              state.currentPlaceholder = state.cachedPlaceHolder
             }
-            if (filterable.value) state.query = state.selectedLabel
-          }
+          })
+          if (!multiple.value) {
+            if (state.selected) {
+              if (
+                filterable.value &&
+                allowCreate.value &&
+                state.createdSelected &&
+                state.createdLabel
+              ) {
+                state.selectedLabel = state.createdLabel
+              } else {
+                state.selectedLabel = state.selected.currentLabel
+              }
+              if (filterable.value) state.query = state.selectedLabel
+            }
 
+            if (filterable.value) {
+              state.currentPlaceholder = state.cachedPlaceHolder
+            }
+          }
+        } else {
+          broadcast('ElSelectDropdown', 'updatePopper')
           if (filterable.value) {
-            state.currentPlaceholder = state.cachedPlaceHolder
-          }
-        }
-      } else {
-        broadcast('ElSelectDropdown', 'updatePopper')
-        if (filterable.value) {
-          state.query = remote.value ? '' : state.selectedLabel
-          handleQueryChange(state.query)
-          if (multiple.value) {
-            refs.input.focus()
-          } else {
-            if (!remote.value) {
-              broadcast('ElOption', 'queryChange', '')
-              broadcast('ElOptionGroup', 'queryChange')
-            }
+            state.query = remote.value ? '' : state.selectedLabel
+            handleQueryChange(state.query)
+            if (multiple.value) {
+              ctx.$refs.input.focus()
+            } else {
+              if (!remote.value) {
+                broadcast('ElOption', 'queryChange', '')
+                broadcast('ElOptionGroup', 'queryChange')
+              }
 
-            if (state.selectedLabel) {
-              state.currentPlaceholder = state.selectedLabel
-              state.selectedLabel = ''
+              if (state.selectedLabel) {
+                state.currentPlaceholder = state.selectedLabel
+                state.selectedLabel = ''
+              }
             }
           }
         }
+        emit('visible-change', val)
       }
-      emit('visible-change', val)
-    })
+    )
 
-    watch(()=>state.options, () => {
-      //check ssr
-      if (window === undefined) return
-      nextTick(() => {
-        broadcast('ElSelectDropdown', 'updatePopper')
-      })
-      if (multiple.value) {
-        resetInputHeight()
+    watch(
+      () => state.options,
+      () => {
+        // check ssr
+        if (window === undefined) return
+        nextTick(() => {
+          broadcast('ElSelectDropdown', 'updatePopper')
+        })
+        if (multiple.value) {
+          resetInputHeight()
+        }
+        // TODO:check ctx in $el
+        const inputs = ctx.$el.querySelectorAll('input')
+        if ([].indexOf.call(inputs, document.activeElement) === -1) {
+          setSelected()
+        }
+        if (
+          defaultFirstOption.value &&
+          (filterable.value || remote.value) &&
+          state.filteredOptionsCount
+        ) {
+          checkDefaultFirstOption()
+        }
       }
-      //TODO:check ctx in $el
-      const inputs = ctx.$el.querySelectorAll('input')
-      if ([].indexOf.call(inputs, document.activeElement) === -1) {
-        setSelected()
-      }
-      if (
-        defaultFirstOption.value &&
-        (filterable.value || remote.value) &&
-        state.filteredOptionsCount
-      ) {
-        checkDefaultFirstOption()
-      }
-    })
+    )
 
     function onInputChange() {
       if (filterable.value && state.query !== state.selectedLabel) {
@@ -732,8 +747,8 @@ export default {
     })
 
     function resetInputWidth() {
-      if (!refs.reference) return
-      state.inputWidth = refs.reference.$el.getBoundingClientRect().width
+      if (!ctx.$refs.reference) return
+      state.inputWidth = ctx.$refs.reference.$el.getBoundingClientRect().width
     }
 
     function handleResize() {
@@ -756,7 +771,7 @@ export default {
       }
       addResizeListener(ctx.$el, handleResize)
 
-      const reference = refs.reference
+      const reference = ctx.$refs.reference
       if (reference && reference.$el) {
         const sizeMap = {
           medium: 36,
@@ -789,7 +804,7 @@ export default {
           state.visible = !state.visible
         }
         if (state.visible) {
-          (refs.input || refs.reference).focus()
+          ;(ctx.$refs.input || ctx.$refs.reference).focus()
         }
       }
     }
@@ -823,7 +838,7 @@ export default {
       emit('clear')
     }
 
-   function getValueKey(item) {
+    function getValueKey(item) {
       if (
         Object.prototype.toString.call(item.value).toLowerCase() !==
         '[object object]'
@@ -833,7 +848,7 @@ export default {
         return getValueByPath(item.value, valueKey.value)
       }
     }
-    //option组件
+    // option组件
     function onOptionDestroy(index) {
       if (index > -1) {
         state.optionsCount--
@@ -841,16 +856,15 @@ export default {
         state.options.splice(index, 1)
       }
     }
-   function doDestroy() {
-      refs.popper && refs.popper.doDestroy()
+    function doDestroy() {
+      ctx.$refs.popper && ctx.$refs.popper.doDestroy()
     }
 
-   function handleClose() {
+    function handleClose() {
       state.visible = false
     }
 
-
-   function setSelected() {
+    function setSelected() {
       if (!multiple.value) {
         const option = getOption(modelValue.value)
         if (option.created) {
@@ -876,7 +890,7 @@ export default {
       })
     }
 
-   function handleFocus(event) {
+    function handleFocus(event) {
       if (!state.softFocus) {
         if (automaticDropdown.value || filterable.value) {
           state.visible = true
@@ -890,12 +904,12 @@ export default {
       }
     }
 
-   function blur() {
+    function blur() {
       state.visible = false
-      refs.reference.blur()
+      ctx.$refs.reference.blur()
     }
 
-   function handleBlur(event) {
+    function handleBlur(event) {
       setTimeout(() => {
         if (state.isSilentBlur) {
           state.isSilentBlur = false
@@ -923,7 +937,7 @@ export default {
       return option.hitState
     }
 
-     function deletePrevTag(e) {
+    function deletePrevTag(e) {
       if (e.target.value.length <= 0 && !toggleLastOptionHitState()) {
         const value = modelValue.value.slice()
         value.pop()
@@ -934,7 +948,7 @@ export default {
 
     function managePlaceholder() {
       if (state.currentPlaceholder !== '') {
-        state.currentPlaceholder = refs.input.value
+        state.currentPlaceholder = ctx.$refs.input.value
           ? ''
           : state.cachedPlaceHolder
       }
@@ -942,10 +956,9 @@ export default {
 
     function resetInputState(e) {
       if (e.keyCode !== 8) toggleLastOptionHitState(false)
-      state.inputLength = refs.input.value.length * 15 + 20
+      state.inputLength = ctx.$refs.input.value.length * 15 + 20
       resetInputHeight()
     }
-
 
     return {
       ...toRefs(state),
@@ -958,9 +971,12 @@ export default {
       iconClass,
       debounce,
       emptyText,
+      name,
+      id,
+      autocomplete,
       showNewOption,
       popperAppendToBody,
-      //method
+      // method
       debouncedOnInputChange,
       debouncedQueryChange,
       toggleMenu,
@@ -980,13 +996,13 @@ export default {
       deletePrevTag,
       managePlaceholder,
       resetInputState,
-      resetInputHeight
+      resetInputHeight,
+      popperClass
     }
   },
   name: 'ElSelect',
 
   componentName: 'ElSelect',
-
 
   components: {
     ElInput,
@@ -1044,6 +1060,6 @@ export default {
       type: Boolean,
       default: true
     }
-  },
+  }
 }
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div
     class="el-select-dropdown el-popper"
-    :class="[{ 'is-multiple': $parent.multiple }, popperClass]"
+    :class="[{ 'is-multiple': multiple }, popperClass]"
     :style="{ minWidth: minWidth }"
   >
     <slot></slot>
@@ -11,14 +11,7 @@
 <script type="text/babel">
 import Popper from 'element-ui/src/utils/vue-popper'
 import { useEmitter } from 'element-ui/src/use/emitter'
-import {
-  ref,
-  computed,
-  watch,
-  onMounted,
-  getCurrentInstance,
-  inject
-} from 'vue'
+import { ref, watch, onMounted, getCurrentInstance, inject } from 'vue'
 export default {
   name: 'ElSelectDropdown',
 
@@ -32,23 +25,25 @@ export default {
     const minWidth = ref('')
     let popperElm, referenceElm
 
-    const { refs, ctx } = getCurrentInstance()
+    const { ctx } = getCurrentInstance()
 
-    const popperClass = computed(() => {
-      return select.refs.popperClass
-    })
-
+    // const popperClass = computed(() => {
+    //   return select.refs.popperClass
+    // })
+    //
+    //
     watch(
-      () => select.refs.inputWidth,
+      () => select.ctx.inputWidth,
       () => {
-        minWidth.value = select.$el.getBoundingClientRect().width + 'px'
+        minWidth.value = select.ctx.$el.getBoundingClientRect().width + 'px'
       }
     )
+
     onMounted(() => {
       referenceElm = select.refs.reference.$el
-      popperElm = select.refs.popperElm = select.$el
+      popperElm = select.refs.popperElm = ctx.$el
       on('updatePopper', () => {
-        if (select.visible) ctx.updatePopper()
+        if (select.ctx.visible) ctx.updatePopper()
       })
       on('destroyPopper', ctx.destroyPopper)
     })
@@ -56,7 +51,8 @@ export default {
       minWidth,
       popperElm,
       referenceElm,
-      popperClass
+      popperClass: select.ctx.popperClass,
+      multiple: select.ctx.multiple
     }
   },
   props: {
