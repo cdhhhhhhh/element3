@@ -1,19 +1,11 @@
 <template>
-  <el-select v-model="value1" multiple placeholder="请选择">
-    <el-option
-            v-for="item in options"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value">
-    </el-option>
-  </el-select>
-
   <el-select
-          v-model="value2"
+          v-model="value"
           multiple
-          collapse-tags
-          style="margin-left: 20px;"
-          placeholder="请选择">
+          filterable
+          allow-create
+          default-first-option
+          placeholder="请选择文章标签">
     <el-option
             v-for="item in options"
             :key="item.value"
@@ -28,23 +20,16 @@
     data() {
       return {
         options: [{
-          value: '选项1',
-          label: '黄金糕'
+          value: 'HTML',
+          label: 'HTML'
         }, {
-          value: '选项2',
-          label: '双皮奶'
+          value: 'CSS',
+          label: 'CSS'
         }, {
-          value: '选项3',
-          label: '蚵仔煎'
-        }, {
-          value: '选项4',
-          label: '龙须面'
-        }, {
-          value: '选项5',
-          label: '北京烤鸭'
+          value: 'JavaScript',
+          label: 'JavaScript'
         }],
-        value1: [],
-        value2: []
+        value: []
       }
     }
   }
