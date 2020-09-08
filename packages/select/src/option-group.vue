@@ -10,11 +10,16 @@
 </template>
 
 <script type="text/babel">
-import Emitter from 'element-ui/src/mixins/emitter'
-
+import { useEmitter } from 'element-ui/src/use/emitter'
+import { getCurrentInstance } from 'vue'
 export default {
-  mixins: [Emitter],
-
+  setup() {
+    const { on, broadcast } = useEmitter()
+    return {
+      on,
+      broadcast
+    }
+  },
   name: 'ElOptionGroup',
 
   componentName: 'ElOptionGroup',
@@ -41,15 +46,16 @@ export default {
 
   methods: {
     queryChange() {
+      const { subTree } = getCurrentInstance()
       this.visible =
-        this.$children &&
-        Array.isArray(this.$children) &&
-        this.$children.some((option) => option.visible === true)
+        subTree.children &&
+        Array.isArray(subTree.children) &&
+        subTree.children.some((option) => option.visible === true)
     }
   },
 
   created() {
-    this.$on('queryChange', this.queryChange)
+    this.on('queryChange', this.queryChange)
   },
 
   mounted() {

@@ -26,6 +26,7 @@
         </el-tag>
         <el-tag
           v-if="selected.length > 1"
+          :key="selected.length - 1"
           :closable="false"
           :size="collapseTagSize"
           type="info"
@@ -35,16 +36,16 @@
         </el-tag>
       </span>
       <transition-group @after-leave="resetInputHeight" v-if="!collapseTags">
-        <div>
+        <div key="transition-group-key">
           <el-tag
-                  v-for="item in selected"
-                  :key="getValueKey(item)"
-                  :closable="!selectDisabled"
-                  :size="collapseTagSize"
-                  :hit="item.hitState"
-                  type="info"
-                  @close="deleteTag($event, item)"
-                  disable-transitions
+            v-for="item in selected"
+            :key="getValueKey(item)"
+            :closable="!selectDisabled"
+            :size="collapseTagSize"
+            :hit="item.hitState"
+            type="info"
+            @close="deleteTag($event, item)"
+            disable-transitions
           >
             <span class="el-select__tags-text">{{ item.currentLabel }}</span>
           </el-tag>
@@ -107,12 +108,10 @@
       @mouseenter.prevent="inputHovering = true"
       @mouseleave="inputHovering = false"
     >
-      <template
-              v-slot:prefix v-if="$slots.prefix">
+      <template v-slot:prefix v-if="$slots.prefix">
         <slot name="prefix"></slot>
       </template>
-      <template
-              v-slot:suffix>
+      <template v-slot:suffix>
         <i
           v-show="!showClose"
           :class="[
@@ -170,6 +169,7 @@
 <script type="text/babel">
 import ElInput from 'element-ui/packages/input'
 import ElSelectMenu from './select-dropdown.vue'
+import useFocus from 'element-ui/src/use/focus.js'
 import ElOption from './option.vue'
 import ElTag from 'element-ui/packages/tag'
 import ElScrollbar from 'element-ui/packages/scrollbar'
@@ -201,7 +201,8 @@ import {
   watch,
   nextTick,
   onMounted,
-  onDeactivated
+  onUnmounted,
+  ref
 } from 'vue'
 
 export default {
@@ -220,6 +221,7 @@ export default {
   setup(props, { emit }) {
     const { ctx } = getCurrentInstance()
     provide('select', getCurrentInstance())
+    const focus = useFocus('reference')
 
     const { broadcast, dispatch, on } = useEmitter()
 
@@ -327,9 +329,9 @@ export default {
       return remote.value ? 300 : 0
     })
 
-    const emptyText = computed(() => {
+    const emptyText = computed((ctx) => {
       if (loading.value) {
-        return loadingText.value || t('el.select.loading')
+        return loadingText?.value || t('el.select.loading')
       } else {
         if (remote.value && state.query === '' && state.options.length === 0)
           return false
@@ -339,7 +341,7 @@ export default {
           state.options.length > 0 &&
           state.filteredOptionsCount === 0
         ) {
-          return noMatchText.value || t('el.select.noMatch')
+          return noMatchText?.value || t('el.select.noMatch')
         }
         if (state.options.length === 0) {
           return noDataText?.value || t('el.select.noData')
@@ -354,7 +356,7 @@ export default {
         .some((option) => option.currentLabel === state.query)
       return (
         filterable.value &&
-        allowCreate.value &&
+        allowCreate?.value &&
         state.query !== '' &&
         !hasExistingOption
       )
@@ -393,8 +395,8 @@ export default {
       if (state.previousQuery === val || state.isOnComposition) return
       if (
         state.previousQuery === null &&
-        (typeof filterMethod.value === 'function' ||
-          typeof remoteMethod.value === 'function')
+        (typeof filterMethod?.value === 'function' ||
+          typeof remoteMethod?.value === 'function')
       ) {
         state.previousQuery = val
         return
@@ -412,11 +414,11 @@ export default {
           resetInputHeight()
         })
       }
-      if (remote.value && typeof remoteMethod.value === 'function') {
+      if (remote.value && typeof remoteMethod?.value === 'function') {
         state.hoverIndex = -1
         remoteMethod.value(val)
-      } else if (typeof filterMethod.value === 'function') {
-        filterMethod.value(val)
+      } else if (typeof filterMethod?.value === 'function') {
+        filterMethod?.value(val)
         broadcast('ElOptionGroup', 'queryChange')
       } else {
         state.filteredOptionsCount = state.optionsCount
@@ -598,7 +600,7 @@ export default {
       const text = event.target.value
       if (event.type === 'compositionend') {
         state.isOnComposition = false
-        nextTick((_) => handleQueryChange(text))
+        nextTick(() => handleQueryChange(text))
       } else {
         const lastCharacter = text[text.length - 1] || ''
         state.isOnComposition = !isKorean(lastCharacter)
@@ -665,7 +667,7 @@ export default {
             if (state.selected) {
               if (
                 filterable.value &&
-                allowCreate.value &&
+                allowCreate?.value &&
                 state.createdSelected &&
                 state.createdLabel
               ) {
@@ -709,13 +711,13 @@ export default {
       () => {
         // check ssr
         if (window === undefined) return
+
         nextTick(() => {
           broadcast('ElSelectDropdown', 'updatePopper')
         })
         if (multiple.value) {
           resetInputHeight()
         }
-        // TODO:check ctx in $el
         const inputs = ctx.$el.querySelectorAll('input')
         if ([].indexOf.call(inputs, document.activeElement) === -1) {
           setSelected()
@@ -727,6 +729,9 @@ export default {
         ) {
           checkDefaultFirstOption()
         }
+      },
+      {
+        deep: true
       }
     )
 
@@ -799,7 +804,7 @@ export default {
       })
       setSelected()
     })
-    onDeactivated(() => {
+    onUnmounted(() => {
       if (ctx.$el && handleResize) removeResizeListener(ctx.$el, handleResize)
     })
 
@@ -1006,7 +1011,8 @@ export default {
       resetInputState,
       resetInputHeight,
       popperClass,
-      handleOptionClick:handleOptionSelect
+      handleOptionClick: handleOptionSelect,
+      focus
     }
   },
   name: 'ElSelect',
@@ -1021,7 +1027,7 @@ export default {
     ElScrollbar
   },
 
-  directives: { Clickoutside:Clickoutside },
+  directives: { Clickoutside: Clickoutside },
 
   props: {
     name: String,

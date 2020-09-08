@@ -26,19 +26,18 @@ import {
   reactive,
   toRefs,
   watch,
-  onDeactivated
+  onUnmounted
 } from 'vue'
 
 export default {
   name: 'ElOption',
 
   componentName: 'ElOption',
-  emits:['queryChange','handleGroupDisabled'],
+  emits: ['queryChange', 'handleGroupDisabled'],
   setup(props) {
-
     const { on, dispatch } = useEmitter()
     const { value, label, created, disabled } = toRefs(props)
-    const {ctx} = getCurrentInstance();
+    const { ctx } = getCurrentInstance()
     const state = reactive({
       index: -1,
       groupDisabled: false,
@@ -67,7 +66,6 @@ export default {
     }
 
     function selectOptionClick() {
-
       if (disabled.value !== true && state.groupDisabled !== true) {
         select.handleOptionClick(ctx, true)
       }
@@ -77,7 +75,6 @@ export default {
       select.cachedOptions.push(ctx)
       select.optionsCount++
       select.filteredOptionsCount++
-
       on('queryChange', queryChange)
       on('handleGroupDisabled', handleGroupDisabled)
     }
@@ -118,12 +115,10 @@ export default {
       return label?.value || (isObject.value ? '' : value.value)
     })
 
-
     const itemSelected = computed(() => {
       if (!select.multiple) {
         return isEqual(value.value, select.modelValue)
       } else {
-
         return contains(select.modelValue, value.value)
       }
     })
@@ -141,7 +136,7 @@ export default {
     })
 
     onCreated()
-    onDeactivated(() => {
+    onUnmounted(() => {
       const { selected, multiple } = select
       const selectedOptions = multiple ? selected : [selected]
       const index = select.cachedOptions.indexOf(ctx)
